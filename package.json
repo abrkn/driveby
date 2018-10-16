@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node -r panik -r dotenv/config index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +16,8 @@
     "panik": "1.0.1",
     "redis": "2.8.0",
     "safep": "1.2.6"
+  },
+  "engines": {
+    "node": ">= 9"
   }
 }
