@@ -1,0 +1,20 @@
+{
+  "name": "driveby",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitcoin": "3.0.1",
+    "bluebird": "3.5.2",
+    "dotenv": "6.1.0",
+    "panik": "1.0.1",
+    "redis": "2.8.0",
+    "safep": "1.2.6"
+  }
+}
