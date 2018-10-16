@@ -5,6 +5,7 @@ const bitcoin = require('bitcoin');
 const Promise = require('bluebird');
 const redis = require('redis');
 const pMap = require('p-map');
+const delay = require('delay');
 
 Promise.promisifyAll(redis);
 
@@ -20,6 +21,7 @@ function urlToBitcoinOptions(url) {
 const { SOURCE_BITCOIND_URL, DESTINATION_BITCOIND_URL, REDIS_URL } = process.env;
 const SOURCE_MIN_HEIGHT = +(process.env.SOURCE_MIN_HEIGHT || 543543);
 const TX_CONCURRENCY = 10;
+const TICK_DELAY = 10e3;
 
 const sourceBitcoinRpc = new bitcoin.Client(urlToBitcoinOptions(new URL(SOURCE_BITCOIND_URL)));
 safep.applyTo(sourceBitcoinRpc, 'cmd');
@@ -29,7 +31,7 @@ safep.applyTo(destBitcoinRpc, 'cmd');
 
 const redisConn = redis.createClient(REDIS_URL);
 
-const main = async () => {
+const tick = async () => {
   const prevHeight = +(await redisConn.getAsync('driveby.height')) || SOURCE_MIN_HEIGHT;
   const { blocks: sourceHeight } = await sourceBitcoinRpc.cmdAsync('getblockchaininfo');
 
@@ -58,6 +60,13 @@ const main = async () => {
     await pMap(blockTxs, (tx, index) => submitTx(height, tx, index), { concurrency: TX_CONCURRENCY });
 
     await redisConn.setAsync('driveby.height', height);
+  }
+};
+
+const main = async () => {
+  while (true) {
+    await tick();
+    await delay(TICK_DELAY);
   }
 };
 
