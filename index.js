@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const redis = require('redis');
 const pMap = require('p-map');
 const delay = require('delay');
+const express = require('express');
 
 Promise.promisifyAll(redis);
 
@@ -33,6 +34,7 @@ const redisConn = redis.createClient(REDIS_URL);
 const tick = async () => {
   const prevHeight = +(await redisConn.getAsync('driveby.height')) || SOURCE_MIN_HEIGHT;
   const { blocks: sourceHeight } = await sourceBitcoinRpc.cmdAsync('getblockchaininfo');
+  await redisConn.setAsync('driveby.sourceHeight', sourceHeight);
 
   const submitTx = async (height, tx, index) => {
     if (+index === 0) {
@@ -47,6 +49,8 @@ const tick = async () => {
       console.error(height, txHash, 'ERROR', error.message);
       return;
     }
+
+    await redisConn.incr('driveby.replayCount');
 
     console.log(height, txHash, 'OK');
   };
@@ -70,3 +74,16 @@ const main = async () => {
 };
 
 main().then(process.exit);
+
+const app = express();
+
+app.get('/', (req, res, next) =>
+  (async () =>
+    res.send({
+      replayedHeight: await redisConn.getAsync('driveby.height'),
+      sourceHeight: await redisConn.getAsync('driveby.sourceHeight'),
+      replayCount: await redisConn.getAsync('driveby.replayCount'),
+    }))().catch(next)
+);
+
+app.listen(process.env.PORT || 3000);
