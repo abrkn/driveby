@@ -1,4 +1,3 @@
-const assert = require('assert');
 const { URL } = require('url');
 const safep = require('safep');
 const bitcoin = require('bitcoin');
